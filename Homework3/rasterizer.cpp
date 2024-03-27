@@ -270,7 +270,12 @@ void rst::rasterizer::rasterize_triangle(const Triangle &t, const std::array<Eig
 
     auto v = t.toVector4();
     Eigen::Vector2i pixel;
-    for (pixel << 0, 0, 1; pixel.y() < height; pixel << (int)(pixel.x() + 1) % width, pixel.y() + (int)(pixel.x() + 1) / width, 1)
+    int l_bound = (int)std::min(t.v[0].x(), std::min(t.v[1].x(), t.v[2].x())), r_bound = (int)std::max(t.v[0].x(), std::max(t.v[1].x(), t.v[2].x())),
+        d_bound = (int)std::min(t.v[0].y(), std::min(t.v[1].y(), t.v[2].y())), u_bound = (int)std::max(t.v[0].y(), std::max(t.v[1].y(), t.v[2].y()));
+    for (pixel << l_bound, d_bound;
+         pixel.y() <= u_bound;
+         pixel << (int)(l_bound + (pixel.x() - l_bound + 1) % (r_bound - l_bound + 1)),
+         pixel.y() + (pixel.x() - l_bound + 1) / (r_bound - l_bound + 1))
     {
         if (insideTriangle(pixel.x(), pixel.y(), t.v))
         {
@@ -282,8 +287,8 @@ void rst::rasterizer::rasterize_triangle(const Triangle &t, const std::array<Eig
             {
                 // TODO : set the current pixel (use the set_pixel function) to the color of the triangle (use getColor function) if it should be painted.
                 depth_buf[pixel.x() + pixel.y() * width] = z_interpolated;
-                auto interpolated_color = alpha * t.color[0] + beta * t.color[1] + gamma * t.color[2];
-                auto interpolated_normal = alpha * t.normal[0] + beta * t.normal[1] + gamma * t.normal[2];
+                auto interpolated_color = interpolate(alpha, beta, gamma, t.color[0], t.color[1], t.color[2], 1);
+                auto interpolated_normal = interpolate(alpha, beta, gamma, t.normal[0], t.normal[1], t.normal[2], 1);
                 auto interpolated_texcoords = alpha * t.tex_coords[0] + beta * t.tex_coords[1] + gamma * t.tex_coords[2];
                 auto interpolated_shadingcoords = alpha * view_pos[0] + beta * view_pos[1] + gamma * view_pos[2];
                 fragment_shader_payload payload(interpolated_color, interpolated_normal.normalized(), interpolated_texcoords, texture ? &*texture : nullptr);
@@ -291,6 +296,7 @@ void rst::rasterizer::rasterize_triangle(const Triangle &t, const std::array<Eig
                 // Use: Instead of passing the triangle's color directly to the frame buffer, pass the color to the shaders first to get the final color;
                 auto pixel_color = fragment_shader(payload);
                 set_pixel(pixel, pixel_color);
+                // std::cout << "pixel:" << pixel << " print color:" << pixel_color << std::endl;
             }
         }
     }
