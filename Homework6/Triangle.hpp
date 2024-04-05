@@ -241,9 +241,10 @@ inline Intersection Triangle::getIntersection(Ray ray)
     {
         inter.happened = true;
         inter.coords = ray.origin + t_tmp * ray.direction;
-        inter.normal = normalize(crossProduct(e1, e2));
-        inter.distance = sqrt(dotProduct(t_tmp * ray.direction, t_tmp * ray.direction));
+        inter.normal = normal;
+        inter.distance = t_tmp;
         inter.obj = this;
+        inter.m = this->m;
     }
 
     return inter;

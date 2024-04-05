@@ -35,8 +35,6 @@ void Renderer::Render(const Scene &scene)
             // Also, don't forget to multiply both of them with the variable
             // *scale*, and x (horizontal) variable with the *imageAspectRatio*
             // Don't forget to normalize this direction!
-            x = ((i + 0.5f) / scene.width * 2 - 1) * scale * imageAspectRatio;
-            y = (1 - (j + 0.5f) / scene.height * 2) * scale;
             Vector3f dir = normalize(Vector3f(x, y, -1));
             framebuffer[m++] = scene.castRay(Ray(eye_pos, dir), 0);
         }
